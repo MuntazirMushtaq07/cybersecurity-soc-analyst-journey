@@ -1,0 +1,5 @@
+Aug 18 10:01:12 server sshd: Failed password for user admin from 192.168.1.50
+Aug 18 10:02:05 server sshd: Failed password for user admin from 192.168.1.50
+Aug 18 10:03:21 server sshd: Accepted password for user admin from 192.168.1.50
+Aug 18 10:15:44 server sshd: Failed password for user test from 10.10.10.25
+Aug 18 10:16:02 server sshd: Failed password for user test from 10.10.10.25
