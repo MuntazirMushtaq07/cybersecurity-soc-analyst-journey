@@ -352,12 +352,36 @@ This project demonstrates the foundational version of that workflow using Window
 
 The investigation evidence is included with this project using the following references:
 
-* **Evidence 1** — 4625 failed authentication activity
-* **Evidence 2** — Time-sorted 4625 authentication events
-* **Evidence 3** — 4624 successful authentication activity
-* **Evidence 4** — Time-sorted authentication results
-* **Evidence 5** — Splunk authentication timeline
-* **Evidence 6** — Windows 4688 post-authentication process creation
+## Evidence
+
+### Evidence 1 — 
+
+![Evidence 1](./Screenshot%202026-09-25%20164214.png)
+
+### Evidence 2 — 
+
+![Evidence 2](./Screenshot%202026-09-25%20164316.png)
+
+### Evidence 3 — 
+
+![Evidence 3](./Screenshot%202026-09-25%20185529.png)
+
+### Evidence 4 — 
+
+![Evidence 4](./Screenshot%202026-09-25%20190817.png)
+
+### Evidence 5 — 
+
+![Evidence 5](./Screenshot%202026-09-25%20191028.png)
+
+### Evidence 6 — 
+
+![Evidence 6](./Screenshot%202026-09-25%20192656.png)
+
+### Evidence 7 — 
+
+![Evidence 7](./Screenshot%202026-09-25%20193807.png)
+
 
 The evidence consists only of telemetry generated during the controlled laboratory investigation.
 
