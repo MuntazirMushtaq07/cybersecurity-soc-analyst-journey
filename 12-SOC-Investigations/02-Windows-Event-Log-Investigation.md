@@ -191,13 +191,11 @@ This demonstrates how a SOC analyst can correlate authentication events using:
 
 ### Windows Event 4624 — Successful Authentication
 
-> Replace the filename below with the exact filename of your 4624 screenshot.
-
-![Windows Event 4624](YOUR-4624-SCREENSHOT-FILENAME.png)
+![Windows Event 4624](Screenshot%202026-09-25%20151903.png)
 
 ### Splunk — Event 4625
 
-![Splunk Event 4625](Screenshot%202026-09-25%20150432.png)
+![Splunk Event 4625](Screenshot%202026-09-25%20152131.png)
 
 ## Skills Demonstrated
 
