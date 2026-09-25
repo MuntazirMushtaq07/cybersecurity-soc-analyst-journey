@@ -1,258 +1,314 @@
 # Windows Attack Chain Detection & Incident Response
 
-## Project Overview
+## Overview
 
-This project demonstrates a controlled Windows security incident from **attack simulation through incident response and recovery**.
+This project demonstrates a complete, controlled SOC investigation and incident response workflow using a Windows endpoint, Kali Linux, and Splunk Enterprise.
 
-The goal was to build and investigate a realistic SOC workflow using a Windows endpoint and Splunk SIEM.
+The objective was to simulate a realistic Windows attack chain using **harmless lab activities**, generate security telemetry, forward the telemetry to Splunk, detect suspicious behavior, trigger a scheduled SOC alert, investigate the activity, and perform containment, eradication, and recovery.
 
-The project covered:
+No real malware, ransomware, virus, or malicious payload was used.
 
-**Attack Simulation → Windows Telemetry → Splunk Collection → Detection → Investigation → Containment → Eradication → Recovery**
-
-All activities were performed in a controlled personal lab environment using harmless test actions. No real malware was used.
-
----
-
-## Objectives
-
-* Generate realistic Windows security telemetry
-* Collect Windows events in Splunk
-* Detect suspicious PowerShell execution
-* Investigate Windows process and authentication events
-* Build an incident timeline
-* Simulate persistence using a scheduled task
-* Perform containment
-* Perform eradication
-* Perform recovery
-* Document the incident like a SOC analyst
-
----
-
-## Lab Architecture
-
-| Component       | Role                            | IP Address     |
-| --------------- | ------------------------------- | -------------- |
-| Kali Linux      | Controlled test/attacker system | `192.168.1.4`  |
-| Windows         | Monitored endpoint              | `192.168.1.27` |
-| Ubuntu + Splunk | SIEM                            | `192.168.1.5`  |
-
-### Data Flow
+### Investigation Workflow
 
 ```text
-Kali / Test Activity
-        ↓
-Windows Endpoint
-        ↓
-Windows Event Logs
-        ↓
+SOC Lab Setup
+      ↓
+Controlled Attack Simulation
+      ↓
+Windows Security Telemetry
+      ↓
 Splunk Universal Forwarder
-        ↓
+      ↓
 Splunk Enterprise
-        ↓
-Detection & Investigation
-        ↓
-Incident Response
+      ↓
+Detection Engineering
+      ↓
+Scheduled Alert
+      ↓
+Investigation & Timeline
+      ↓
+Containment
+      ↓
+Eradication
+      ↓
+Recovery
+      ↓
+Lessons Learned
 ```
 
 ---
 
-# 1. Attack Simulation
+# Objectives
 
-The project used controlled and harmless simulations rather than real malware.
+* Build a practical Windows SOC monitoring environment
+* Collect Windows security telemetry in Splunk
+* Monitor PowerShell process execution
+* Analyze Windows Event IDs
+* Simulate suspicious endpoint behavior safely
+* Create a Splunk detection
+* Configure and test scheduled alerting
+* Investigate a simulated attack chain
+* Construct an incident timeline
+* Perform containment
+* Perform eradication
+* Perform recovery
+* Document the investigation using evidence
 
-The simulated attack chain included:
+---
 
-1. SMB reconnaissance
-2. Authentication attempts
-3. Successful SMB authentication
-4. PowerShell process execution
-5. PowerShell Script Block Logging
-6. Network connection testing
-7. Scheduled-task persistence simulation
+# Lab Architecture
 
-The purpose was to generate telemetry that a SOC analyst could investigate.
+| Component        | Role                           | IP Address     |
+| ---------------- | ------------------------------ | -------------- |
+| Windows Endpoint | Monitored SOC endpoint         | `192.168.1.27` |
+| Kali Linux       | Controlled attack/test machine | `192.168.1.4`  |
+| Ubuntu           | Splunk Enterprise server       | `192.168.1.5`  |
+
+### Main Components
+
+* Windows 10/11 endpoint
+* Splunk Enterprise
+* Splunk Universal Forwarder
+* Kali Linux
+* Windows Event Viewer
+* Windows Firewall
+* PowerShell
+* Windows Task Scheduler
+* Nmap
+* SMB testing tools
+
+---
+
+# 1. Windows Telemetry Collection
+
+The Windows endpoint was configured to forward security telemetry to Splunk through the Splunk Universal Forwarder.
+
+The following Windows log sources were configured:
+
+* Windows Security
+* PowerShell Operational
+* Windows Defender Operational
+* Task Scheduler Operational
+* Windows Firewall
+* DNS Client
+
+Additional auditing was enabled for:
+
+* Process Creation
+* PowerShell Script Block Logging
+
+### Important Event IDs
+
+| Event ID | Purpose                         |
+| -------- | ------------------------------- |
+| 4624     | Successful logon                |
+| 4625     | Failed logon                    |
+| 4688     | Process creation                |
+| 4104     | PowerShell Script Block Logging |
+
+The telemetry was successfully received by Splunk and verified through searches.
 
 ---
 
 # 2. Initial Reconnaissance
 
-The Windows endpoint was scanned from Kali using:
+A controlled Nmap scan was performed from the Kali test machine against the Windows lab endpoint.
 
 ```bash
 nmap -Pn -sV 192.168.1.27
 ```
 
-The scan identified Windows services including:
+The scan was used to identify exposed Windows services and understand the attack surface before the controlled simulation.
 
-* TCP 135 — Microsoft RPC
-* TCP 139 — NetBIOS
-* TCP 445 — SMB
-* TCP 3306 — MySQL/MariaDB
+SMB port 445 was separately verified during the earlier investigation.
 
-SMB port 445 was used for the controlled authentication portion of the lab.
-
----
-
-# 3. Windows Authentication Investigation
-
-Windows Security Event IDs were investigated in Splunk.
-
-### Event ID 4625 — Failed Logon
-
-The lab generated failed authentication attempts against the `SOC-Lab` account.
-
-The investigation focused on:
-
-* Source IP
-* Username
-* Logon Type
-* Failure information
-* Event timestamps
-* Frequency of failed attempts
-
-The activity demonstrated how repeated authentication failures can provide an initial indicator for a SOC investigation.
-
-### Event ID 4624 — Successful Logon
-
-A successful SMB authentication followed the failed attempts.
-
-The investigation correlated:
-
-```text
-4625 Failed Authentication
-        ↓
-4625 Failed Authentication
-        ↓
-4625 Failed Authentication
-        ↓
-4624 Successful Authentication
+```bash
+nmap -Pn -p 445 -sV 192.168.1.27
 ```
 
-This sequence demonstrated why SOC analysts should investigate authentication events as a timeline rather than viewing individual events in isolation.
-
 ---
 
-# 4. Process Creation Monitoring
+# 3. Controlled Authentication Investigation
 
-Windows Process Creation auditing was enabled to generate Event ID **4688** telemetry.
+A controlled authentication scenario was performed using the dedicated `SOC-Lab` Windows account.
 
-The Splunk detection search used:
+The investigation generated:
+
+* Failed authentication events
+* A subsequent successful authentication
+* Source IP information
+* Logon type information
+* Authentication package information
+* Status/substatus information
+
+The relevant Windows events were investigated in Splunk using:
 
 ```spl
-index=* EventCode=4688 "powershell.exe"
+index=main EventCode=4625 "SOC-Lab"
 ```
 
-This successfully identified PowerShell process creation events.
+and:
 
-The investigation examined the relationship between:
+```spl
+index=main EventCode=4624 "SOC-Lab"
+```
 
-* Process creation
-* User account
-* Host
-* Timestamp
-* PowerShell activity
+The investigation demonstrated how a SOC analyst can distinguish repeated authentication failures from a later successful authentication and build a chronological understanding of the activity.
+
+The `SOC-Lab` account was verified as a standard user rather than an administrator.
 
 ---
 
-# 5. PowerShell Script Block Logging
+# 4. PowerShell Telemetry
 
-PowerShell Script Block Logging was enabled using Windows registry policy configuration.
+PowerShell Script Block Logging was enabled on the Windows endpoint.
 
-The lab generated harmless PowerShell activity.
+A harmless PowerShell command was executed to generate security telemetry.
 
-Example test:
+Example:
 
 ```cmd
-powershell.exe -Command "Write-Output 'SOC-Lab PowerShell telemetry test'"
+powershell.exe -NoProfile -Command "Write-Output 'SOC-Lab fresh alert test'"
 ```
 
-PowerShell Script Block Logging generated Event ID **4104** telemetry.
+The resulting PowerShell activity was successfully observed through Windows telemetry and forwarded to Splunk.
 
-Splunk successfully received the 4104 events.
+### Process Creation Detection
 
----
+Windows Event ID **4688** was used to identify PowerShell process creation.
 
-# 6. Detection Engineering
-
-A basic detection was created in Splunk for PowerShell process execution:
+Example Splunk search:
 
 ```spl
 index=main EventCode=4688 "powershell.exe"
 ```
 
-The detection was validated using actual Windows telemetry generated during the lab.
+### PowerShell Script Block Logging
 
-A host-based aggregation was also tested:
+Windows Event ID **4104** was also verified in Splunk.
+
+Example:
+
+```spl
+index=main EventCode=4104
+```
+
+This provided visibility into PowerShell activity beyond simply detecting that the executable had started.
+
+---
+
+# 5. Harmless Suspicious-Document Simulation
+
+A controlled lab workspace was created:
+
+```text
+C:\SOC-Lab
+├── Incident
+├── Evidence
+└── Quarantine
+```
+
+A harmless text file was created to represent a simulated document:
+
+```text
+Invoice_September.txt
+```
+
+A harmless PowerShell command was then used to simulate suspicious document execution behavior.
+
+The command created a marker file and generated PowerShell telemetry.
+
+No malicious payload was used.
+
+The purpose was to reproduce the type of endpoint behavior that a SOC analyst might investigate after receiving a suspicious process alert.
+
+---
+
+# 6. Detection Engineering
+
+A Splunk detection was created to identify PowerShell process execution.
+
+### Detection Search
+
+```spl
+index=main EventCode=4688 "powershell.exe"
+```
+
+The search was verified against the Windows telemetry and successfully returned PowerShell process-creation events.
+
+A basic aggregation was also tested:
 
 ```spl
 index=main EventCode=4688 "powershell.exe"
 | stats count by host
 ```
 
-This demonstrated a simple detection-engineering workflow:
-
-```text
-Windows Activity
-      ↓
-Event 4688
-      ↓
-Splunk
-      ↓
-Detection Search
-      ↓
-Suspicious PowerShell Activity
-```
+This demonstrated how detection results can be summarized by endpoint.
 
 ---
 
-# 7. Event Correlation and Timeline
+# 7. Scheduled Splunk Alert
 
-PowerShell process creation and Script Block Logging events were combined into an investigation timeline.
+The PowerShell detection was configured as a scheduled Splunk alert.
 
-Search used:
+### Alert
 
-```spl
-index=main (EventCode=4688 OR EventCode=4104)
-| sort 0 _time
-| table _time EventCode host
-```
+**SOC-Lab - PowerShell Process Execution**
 
-This allowed the analyst to examine activity chronologically.
+### Configuration
 
-The key concept demonstrated was:
+* Type: Alert
+* Schedule: Enabled
+* Trigger condition: Results greater than 0
+* Time range: Last 15 minutes
+* Trigger behavior: Once
+* Owner: `admin`
+* App: `Search`
+* Sharing: Private
+* Status: Enabled
 
-> **Individual events provide clues; a timeline provides context.**
+The alert was tested using fresh PowerShell process-creation telemetry.
+
+The alert successfully triggered and the Splunk interface showed:
+
+**17 triggered alerts**
+
+This confirms that the detection search was not only returning events but was also being evaluated by the scheduled alert mechanism.
 
 ---
 
 # 8. Network Activity Simulation
 
-A controlled network connection test was performed from the Windows endpoint:
+A controlled TCP connection test was performed from the Windows endpoint toward the Kali test machine.
 
 ```powershell
 Test-NetConnection 192.168.1.4 -Port 445
 ```
 
-The result showed:
+The test demonstrated how a SOC analyst can investigate endpoint-to-endpoint network communication and distinguish successful connectivity from a blocked or failed connection.
 
-* Source: `192.168.1.27`
-* Destination: `192.168.1.4`
-* Destination port: `445`
-* ICMP ping succeeded
-* TCP connection to port 445 failed
+The test returned:
 
-This demonstrated how a SOC analyst can distinguish basic host reachability from successful TCP connectivity.
+```text
+PingSucceeded    : True
+TcpTestSucceeded : False
+```
+
+This demonstrated that ICMP connectivity existed while the TCP/445 connection was unsuccessful.
 
 ---
 
 # 9. Persistence Simulation
 
-A harmless scheduled task was created to simulate persistence:
+A harmless Windows Scheduled Task was created to simulate persistence behavior.
 
-```cmd
-schtasks /create /tn "SOC-Lab-TestTask" /tr "cmd.exe /c echo SOC-Lab scheduled task executed >> C:\SOC-Lab\Incident\ScheduledTask_Marker.txt" /sc once /st 23:59 /f
+Task name:
+
+```text
+SOC-Lab-TestTask
 ```
+
+The task was configured to execute a harmless command that would write a marker file.
 
 The task was then investigated using:
 
@@ -260,270 +316,282 @@ The task was then investigated using:
 schtasks /query /tn "SOC-Lab-TestTask" /fo LIST /v
 ```
 
-The task was intentionally harmless and existed only to demonstrate how a SOC analyst could identify and investigate scheduled-task persistence.
+This demonstrated how a SOC analyst can investigate scheduled tasks as a potential persistence mechanism.
 
-Windows Task Scheduler telemetry was also checked in Splunk, but the expected Task Scheduler events were not available in the Splunk search during this lab. Therefore, no Splunk Task Scheduler detection is claimed.
-
----
-
-# 10. Investigation Findings
-
-The simulated incident produced several useful investigation indicators:
-
-| Indicator              | Observation                                           |
-| ---------------------- | ----------------------------------------------------- |
-| Source system          | Kali test machine                                     |
-| Windows endpoint       | `192.168.1.27`                                        |
-| Account                | `SOC-Lab`                                             |
-| Authentication         | Failed attempts followed by successful authentication |
-| Process                | PowerShell                                            |
-| Event ID               | 4688                                                  |
-| PowerShell telemetry   | Event ID 4104                                         |
-| Persistence simulation | Scheduled task                                        |
-| Network test           | TCP 445 connection attempt                            |
-
-The investigation demonstrated how authentication, process, PowerShell, network and persistence information can be combined into an incident narrative.
+The task was intentionally harmless and created only for the controlled lab.
 
 ---
 
-# 11. Containment
+# 10. Event Timeline Investigation
 
-A temporary Windows Firewall rule was created to block SMB traffic from the controlled test source:
+PowerShell process and script-block telemetry were combined into a chronological investigation.
+
+Example search:
+
+```spl
+index=main (EventCode=4688 OR EventCode=4104)
+| sort 0 _time
+| table _time EventCode host
+```
+
+This allowed the investigation to establish the sequence of endpoint activity and understand how multiple Windows events can contribute to a single incident timeline.
+
+---
+
+# 11. Incident Findings
+
+The controlled investigation demonstrated the following SOC-relevant behaviors:
+
+1. Windows endpoint reconnaissance was performed.
+2. SMB exposure was investigated.
+3. Authentication activity was generated and analyzed.
+4. Failed authentication events were observed.
+5. Successful authentication was observed.
+6. PowerShell execution generated Event ID 4688.
+7. PowerShell Script Block Logging generated Event ID 4104.
+8. Suspicious-document execution was safely simulated.
+9. Network connectivity was tested.
+10. A scheduled task was created to simulate persistence.
+11. Splunk detection identified PowerShell process execution.
+12. A scheduled Splunk alert successfully triggered.
+13. The activity was investigated using Windows and Splunk telemetry.
+14. Containment was performed.
+15. Simulated persistence and artifacts were removed.
+16. The endpoint was returned to a clean lab state.
+
+---
+
+# 12. Containment
+
+After identifying the simulated activity, a temporary Windows Firewall containment rule was created to block SMB communication from the controlled Kali test machine.
 
 ```cmd
 netsh advfirewall firewall add rule name="SOC-Lab-Containment" dir=in action=block protocol=TCP localport=445 remoteip=192.168.1.4
 ```
 
-This represented the containment phase of the incident response process.
+The rule was then verified through Windows Firewall configuration.
 
-The objective was to restrict the suspected source from reaching the SMB service while the investigation and cleanup were performed.
+This represented the **containment** stage of the incident response lifecycle.
+
+The objective was to restrict the simulated attacker's access while the investigation and remediation were performed.
 
 ---
 
-# 12. Eradication
+# 13. Eradication
 
 The simulated persistence mechanism and harmless test artifacts were removed.
 
-The scheduled task was deleted:
+The Scheduled Task was deleted:
 
 ```cmd
 schtasks /delete /tn "SOC-Lab-TestTask" /f
 ```
 
-The simulated artifacts were removed from:
+The harmless test artifacts were also removed.
 
-```text
-C:\SOC-Lab\Incident\
-```
+The task was then queried again to verify that it no longer existed.
 
-The task was subsequently queried again and was no longer present.
+This represented the **eradication** stage.
 
 ---
 
-# 13. Recovery
+# 14. Recovery
 
-After containment and eradication, the temporary containment firewall rule was removed:
+After remediation, the temporary containment firewall rule was removed:
 
 ```cmd
 netsh advfirewall firewall delete rule name="SOC-Lab-Containment"
 ```
 
+The environment was then verified.
+
 Final verification confirmed:
 
-* The containment firewall rule no longer existed
-* The simulated scheduled task no longer existed
-* The temporary test artifacts had been removed
-* The incident directory contained only the lab README
+* The containment firewall rule no longer existed.
+* The simulated Scheduled Task no longer existed.
+* The simulated test artifacts had been removed.
+* The incident directory contained only the project README artifact.
 
-This completed the recovery stage.
-
----
-
-# 14. Alert Configuration Note
-
-A scheduled Splunk alert was configured for the PowerShell detection.
-
-The alert was tested with different scheduling and trigger settings.
-
-The detection search itself successfully returned the expected PowerShell events.
-
-However, the automated alert action was **not successfully demonstrated as firing through the Splunk alert history/action log** during this version of the lab.
-
-Therefore, this project does **not** claim successful automated alert execution.
-
-A simpler scheduled-alert test will be performed separately as a future improvement.
+This represented the **recovery** stage of the incident response lifecycle.
 
 ---
 
-# 15. Incident Response Lifecycle
+# 15. Incident Response Lifecycle Demonstrated
 
-The complete workflow demonstrated in this project was:
-
-```text
-1. Attack Simulation
-        ↓
-2. Telemetry Generation
-        ↓
-3. Detection
-        ↓
-4. Investigation
-        ↓
-5. Timeline Construction
-        ↓
-6. Containment
-        ↓
-7. Eradication
-        ↓
-8. Recovery
-        ↓
-9. Lessons Learned
-```
+| Phase           | Lab Activity                                      |
+| --------------- | ------------------------------------------------- |
+| Preparation     | Built Windows + Kali + Splunk SOC lab             |
+| Detection       | Splunk identified PowerShell process creation     |
+| Alerting        | Scheduled Splunk alert triggered                  |
+| Investigation   | Analyzed Windows Event IDs and endpoint activity  |
+| Timeline        | Correlated PowerShell events chronologically      |
+| Containment     | Blocked SMB access using Windows Firewall         |
+| Eradication     | Removed scheduled task and simulated artifacts    |
+| Recovery        | Removed containment rule and verified clean state |
+| Lessons Learned | Documented detection and response improvements    |
 
 ---
 
-# 16. Lessons Learned
+# 16. Evidence
 
-### Detection
+### Evidence 08 — PowerShell Detection Results
 
-Simple, reliable searches are often better starting points than complicated correlation queries.
+![PowerShell Detection Results](./Evidence-08-PowerShell-Detection-Results.png.png)
 
-### Investigation
-
-A single event rarely provides enough context. Combining timestamps, users, source IPs, event IDs and process information produces a stronger investigation.
-
-### PowerShell
-
-PowerShell process creation and Script Block Logging provide complementary telemetry:
-
-* **4688** → process creation
-* **4104** → PowerShell script block activity
-
-### Persistence
-
-Scheduled tasks are an important Windows persistence mechanism that should be investigated when unexpected tasks appear.
-
-### Incident Response
-
-Detection is only one part of SOC work.
-
-A complete investigation should continue through:
-
-**Detection → Investigation → Containment → Eradication → Recovery**
-
-### Lab Discipline
-
-Security testing should be performed in a controlled environment and temporary firewall rules or test artifacts should be removed after testing.
+Demonstrates the Splunk detection search identifying PowerShell process-creation activity.
 
 ---
 
-# 18. Evidence
+### Evidence 09 — PowerShell Event Timeline
 
-The following screenshots provide evidence from the controlled Windows SOC lab.
+![PowerShell Event Timeline](./Evidence-09-PowerShell-Event-Timeline.png.png)
 
-## PowerShell Detection
+Demonstrates chronological investigation of Windows PowerShell-related events.
 
-### Evidence 8 — PowerShell Detection Results
-
-Splunk successfully identified PowerShell process and script-block telemetry generated during the controlled simulation.
-
-![PowerShell Detection Results](Evidence-08-PowerShell-Detection-Results.png.png)
-
-### Evidence 9 — PowerShell Event Timeline
-
-The 4688 and 4104 events were reviewed chronologically to build an investigation timeline.
-
-![PowerShell Event Timeline](Evidence-09-PowerShell-Event-Timeline.png.png)
-
-## Network Investigation
+---
 
 ### Evidence 10 — Network Connection Test
 
-A controlled connection test was performed from the Windows endpoint toward the Kali test system.
+![Network Connection Test](./Evidence-10-Network-Connection-Test.png.png)
 
-![Network Connection Test](Evidence-10-Network-Connection-Test.png.png)
+Demonstrates controlled endpoint network connectivity testing.
 
-## Persistence Investigation
+---
 
 ### Evidence 12 — Scheduled Task Creation
 
-A harmless scheduled task was created to simulate a persistence mechanism.
+![Scheduled Task Creation](./Evidence-12-Scheduled-Task-Creation.png.png)
 
-![Scheduled Task Creation](Evidence-12-Scheduled-Task-Creation.png.png)
+Demonstrates creation of the harmless scheduled task used to simulate persistence.
+
+---
 
 ### Evidence 13 — Scheduled Task Investigation
 
-The scheduled task was investigated using Windows command-line tools.
+![Scheduled Task Investigation](./Evidence-13-Scheduled-Task-Investigation.png.png)
 
-![Scheduled Task Investigation](Evidence-13-Scheduled-Task-Investigation.png.png)
+Demonstrates investigation of the scheduled task using Windows command-line tools.
 
-## Incident Response
+---
 
-### Evidence 14 — Containment
+### Evidence 14 — Containment Firewall Block
 
-A temporary Windows Firewall rule was applied as the containment action.
+![Containment Firewall Block](./Evidence-14-Containment-Firewall-Block.png.png)
 
-![Containment Firewall Block](Evidence-14-Containment-Firewall-Block.png.png)
+Demonstrates the temporary firewall containment action.
+
+---
 
 ### Evidence 16 — Eradication
 
-The simulated scheduled task and temporary test artifacts were removed.
+![Eradication](./Evidence-16-Eradication.png.png)
 
-![Eradication](Evidence-16-Eradication.png.png)
+Demonstrates removal of the simulated scheduled task and test artifacts.
+
+---
 
 ### Evidence 17 — Recovery
 
-The temporary containment firewall rule was removed and the endpoint was returned to its normal lab state.
+![Recovery](./Evidence-17-Recovery-Firewall-Restored.png.png)
 
-![Recovery](Evidence-17-Recovery-Firewall-Restored.png.png)
+Demonstrates removal of the temporary containment rule and restoration of the lab environment.
 
+---
 
-# 18. Skills Demonstrated
+### Evidence 18 — Splunk Scheduled Alert Triggered
+
+![Splunk Scheduled Alert Triggered](./Evidence-18-Splunk-Scheduled-Alert-Triggered.png.png)
+
+Demonstrates the configured Splunk alert in an enabled state and shows that the alert successfully triggered.
+
+The alert displayed **17 triggered alerts** during testing.
+
+---
+
+# 17. Skills Demonstrated
+
+### SOC / SIEM
+
+* Splunk Enterprise
+* Splunk Universal Forwarder
+* SIEM architecture
+* Log collection
+* Log analysis
+* Detection engineering
+* Scheduled alerting
+* Event correlation
+* Incident investigation
+* Timeline analysis
 
 ### Windows Security
 
 * Windows Event Viewer
-* Security Event IDs
-* Authentication investigation
-* Process Creation auditing
-* PowerShell logging
-* Scheduled-task investigation
+* Event ID 4624
+* Event ID 4625
+* Event ID 4688
+* Event ID 4104
+* PowerShell monitoring
+* Process creation auditing
+* Script Block Logging
 * Windows Firewall
+* Scheduled Task investigation
+* User/group investigation
 
-### SIEM / Splunk
+### Networking
 
-* Windows log collection
-* Event searching
-* Detection engineering
-* Event correlation
-* Timeline analysis
-* Alert configuration
+* Nmap
+* SMB
+* TCP/445
+* Network connectivity testing
+* Source/destination analysis
+* Network reconnaissance
 
-### SOC Operations
+### Incident Response
 
-* Alert investigation
-* Evidence collection
-* Incident timeline construction
+* Detection
+* Investigation
 * Containment
 * Eradication
 * Recovery
 * Lessons learned
+* Evidence collection
+* Incident documentation
 
 ### Security Tools
 
-* Nmap
 * Splunk
-* Windows Event Viewer
-* Windows Firewall
+* Nmap
+* Wireshark
+* Kali Linux
 * Windows command-line tools
+
+---
+
+# 18. Lessons Learned
+
+This project reinforced several practical SOC concepts:
+
+* A single event rarely provides the complete incident story.
+* Authentication events should be investigated with source information, timestamps, logon type, and context.
+* Process creation telemetry can provide important endpoint visibility.
+* PowerShell Script Block Logging provides additional investigation context.
+* Scheduled Tasks can be investigated as potential persistence mechanisms.
+* Network activity can help connect endpoint behavior with other systems.
+* Detection searches need to be tested against fresh telemetry.
+* Scheduled alerts must be verified through actual triggering rather than assuming configuration alone is sufficient.
+* Incident response requires more than detection; containment, eradication, and recovery must also be considered.
+* Lab simulations can safely reproduce SOC-relevant behaviors without deploying real malware.
 
 ---
 
 # Conclusion
 
-This project demonstrates an end-to-end **Windows SOC investigation and incident-response workflow** using a controlled lab environment.
+This project demonstrates a complete hands-on Windows SOC investigation using a controlled attack simulation and Splunk-based detection workflow.
 
-Rather than focusing only on identifying an individual alert, the project demonstrates the broader SOC process:
+The lab progressed from endpoint telemetry collection and attack simulation through detection, scheduled alerting, investigation, timeline analysis, containment, eradication, and recovery.
 
-**Generate activity → collect telemetry → detect → investigate → contain → eradicate → recover → document.**
+The project provides practical evidence of experience with:
 
-The project was intentionally performed with harmless simulations so that the complete detection and response lifecycle could be practiced safely.
+**Windows Security + PowerShell + Splunk + SIEM Detection + Endpoint Investigation + Network Investigation + Incident Response**
+
+All activities were performed in a controlled laboratory environment using harmless simulations.
