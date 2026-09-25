@@ -426,13 +426,13 @@ The following screenshots provide evidence from the controlled Windows SOC lab.
 
 Splunk successfully identified PowerShell process and script-block telemetry generated during the controlled simulation.
 
-![PowerShell Detection Results](Evidence-08-PowerShell-Detection-Results.png)
+![PowerShell Detection Results](Evidence-08-PowerShell-Detection-Results.png.png)
 
 ### Evidence 9 — PowerShell Event Timeline
 
 The 4688 and 4104 events were reviewed chronologically to build an investigation timeline.
 
-![PowerShell Event Timeline](Evidence-09-PowerShell-Event-Timeline.png)
+![PowerShell Event Timeline](Evidence-09-PowerShell-Event-Timeline.png.png)
 
 ## Network Investigation
 
@@ -440,7 +440,7 @@ The 4688 and 4104 events were reviewed chronologically to build an investigation
 
 A controlled connection test was performed from the Windows endpoint toward the Kali test system.
 
-![Network Connection Test](Evidence-10-Network-Connection-Test.png)
+![Network Connection Test](Evidence-10-Network-Connection-Test.png.png)
 
 ## Persistence Investigation
 
@@ -448,13 +448,13 @@ A controlled connection test was performed from the Windows endpoint toward the 
 
 A harmless scheduled task was created to simulate a persistence mechanism.
 
-![Scheduled Task Creation](Evidence-12-Scheduled-Task-Creation.png)
+![Scheduled Task Creation](Evidence-12-Scheduled-Task-Creation.png.png)
 
 ### Evidence 13 — Scheduled Task Investigation
 
 The scheduled task was investigated using Windows command-line tools.
 
-![Scheduled Task Investigation](Evidence-13-Scheduled-Task-Investigation.png)
+![Scheduled Task Investigation](Evidence-13-Scheduled-Task-Investigation.png.png)
 
 ## Incident Response
 
@@ -462,19 +462,19 @@ The scheduled task was investigated using Windows command-line tools.
 
 A temporary Windows Firewall rule was applied as the containment action.
 
-![Containment Firewall Block](Evidence-14-Containment-Firewall-Block.png)
+![Containment Firewall Block](Evidence-14-Containment-Firewall-Block.png.png)
 
 ### Evidence 16 — Eradication
 
 The simulated scheduled task and temporary test artifacts were removed.
 
-![Eradication](Evidence-16-Eradication.png)
+![Eradication](Evidence-16-Eradication.png.png)
 
 ### Evidence 17 — Recovery
 
 The temporary containment firewall rule was removed and the endpoint was returned to its normal lab state.
 
-![Recovery](Evidence-17-Recovery-Firewall-Restored.png)
+![Recovery](Evidence-17-Recovery-Firewall-Restored.png.png)
 
 
 # 18. Skills Demonstrated
