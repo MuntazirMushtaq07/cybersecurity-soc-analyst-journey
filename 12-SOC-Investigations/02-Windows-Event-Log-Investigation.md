@@ -265,11 +265,12 @@ Useful investigation fields include:
 
 # Evidence Screenshots
 
-## Windows Event 4625 — Failed Authentication
+## Splunk — Event 4625
 
 ![Windows Event 4625](Screenshot%202026-09-25%20150432%20-%20Copy.png)
 
-## Splunk — Event 4625
+
+## Windows Event 4625 — Failed Authentication
 
 ![Splunk Event 4625](Screenshot%202026-09-25%20154926.png)
 
