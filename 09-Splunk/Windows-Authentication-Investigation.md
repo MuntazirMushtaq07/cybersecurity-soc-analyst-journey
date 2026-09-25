@@ -118,12 +118,18 @@ SOC investigation
 
 ## Evidence
 
-Screenshots from the lab will be added to this project to demonstrate:
+### Windows Event Viewer — Event ID 4625
 
-1. SMB authentication attempt from Kali
-2. Windows Event Viewer — Event ID 4625
-3. Splunk — Event ID 4625
-4. Relevant event fields and timestamps
+The Windows Security log recorded the controlled failed network authentication attempt.
+
+![Windows Event 4625](Screenshot%202026-09-25%20140558%20-%20Copy.png)
+
+### Splunk — Event ID 4625
+
+The same Windows Security event was successfully collected and displayed in Splunk.
+
+![Splunk Event 4625](Screenshot%202026-09-25%20150432.png)
+
 
 ## Status
 
